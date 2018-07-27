@@ -1,0 +1,278 @@
+---
+title: "Education (MSRI)"
+author: "Cristal Quiñones"
+date: "7/3/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+Summaries for Dropouts in 2011-12 
+```{r}
+elevendata <- read.csv(file="dropout2011_12.csv", header=TRUE)
+
+elevendata <- elevendata[,-c(1)] #removing the first column which is just an index 
+
+# Col 1 - Schools 
+length(unique(elevendata$CDS_CODE)) # Finding how many unique elements are in the column CDS_CODE - returns 5382
+length((elevendata$CDS_CODE)) # checking the length of the original column
+
+#now we do the same for all 20 columns  
+
+# Col 2 - ethnicities 
+length(unique(elevendata$ETHNIC)) # returns 9 
+
+# Col 3 - gender 
+length(unique(elevendata$GENDER)) # 2 
+
+sum(elevendata$E7) #465108
+sum(elevendata$E8) #468275
+sum(elevendata$E9) # 501258
+sum(elevendata$E10) # 495009
+sum(elevendata$E11) # 487466 
+sum(elevendata$E12) # 495945
+sum(elevendata$EUS) #5096 
+sum(elevendata$ETOT) # 1984774
+sum(elevendata$D7) #3367
+sum(elevendata$D8) #3023
+sum(elevendata$D9) # 8394
+sum(elevendata$D10) # 10874
+sum(elevendata$D11) # 15237 
+sum(elevendata$D12) # 44589
+sum(elevendata$DUS) # 319
+sum(elevendata$DTOT) #79413
+
+
+```
+
+Dropout 2012 - 2013 # does not exist? 
+```{r}
+twelvedata <- read.csv(file="dropout2012_13.csv", header=TRUE)
+
+length(unique(twelvedata$CDS_CODE)) #936
+
+# Col 2 - ethnicities 
+length(unique(twelvedata$ETHNIC)) # 9 
+# Col 3 - gender 
+length(unique(twelvedata$GENDER)) # 2 
+
+sum(twelvedata$E7) #470494
+sum(twelvedata$E8) #466132
+sum(twelvedata$E9) # 497455
+sum(twelvedata$E10) # 486498
+sum(twelvedata$E11) # 481531 
+sum(twelvedata$E12) # 499275
+sum(twelvedata$EUS) #5271 
+sum(twelvedata$ETOT) # 1970030
+sum(twelvedata$D7) #3397
+sum(twelvedata$D8) #3062
+sum(twelvedata$D9) # 9362
+sum(twelvedata$D10) # 10237
+sum(twelvedata$D11) # 14993 
+sum(twelvedata$D12) # 42606
+sum(twelvedata$DUS) # 318
+sum(twelvedata$DTOT) #77516
+```
+
+Dropout 2013 - 2014 also does not exist 
+```{r}
+thirteendata <- read.csv(file="dropout2013_14.csv", header=T)
+length(unique(thirteendata$CDS_CODE))
+length(unique(thirteendata$ETHNIC))
+
+sum(thirteendata$E7) # 465592
+sum(thirteendata$E8) # 472381
+sum(thirteendata$E9) # 491493
+sum(thirteendata$E10) # 484993
+sum(thirteendata$E11) # 477425
+sum(thirteendata$E12) # 498403
+sum(thirteendata$EUS) # 5603
+sum(thirteendata$ETOT) # 1957917
+sum(thirteendata$D7) # 1671
+sum(thirteendata$D8) # 1282 
+sum(thirteendata$D9) # 5917 
+sum(thirteendata$D10) # 6485 
+sum(thirteendata$D11) #10710 
+sum(thirteendata$D12) # 38292
+sum(thirteendata$DUS) # 196
+sum(thirteendata$DTOT) # 61600 
+
+```
+
+Dropout 2014 - 2015 
+```{r}
+fourteendata <- read.csv(file="dropout2014_15.csv", header=T)
+length(unique(fourteendata$CDS_CODE)) # 5432
+length(unique(fourteendata$ETHNIC)) # 9
+# gender = 2 
+sum(fourteendata$E7) # 464286
+sum(fourteendata$E8) # 467038
+sum(fourteendata$E9) # 495004
+sum(fourteendata$E10) # 480753
+sum(fourteendata$E11) # 477097
+sum(fourteendata$E12) # 496901
+sum(fourteendata$EUS) # 5600
+sum(fourteendata$ETOT) # 1955355
+sum(fourteendata$D7) # 1659
+sum(fourteendata$D8) # 1284 
+sum(fourteendata$D9) # 6165 
+sum(fourteendata$D10) # 5720 
+sum(fourteendata$D11) #8705 
+sum(fourteendata$D12) # 32978
+sum(fourteendata$DUS) # 236
+sum(fourteendata$DTOT) # 53804 
+```
+
+Dropout 2015 - 2016 
+```{r}
+fifteendata <- read.csv(file="dropout2015_16.csv", header=TRUE)
+length(unique(fifteendata$CDS_CODE)) # 5476
+length(unique(fifteendata$ETHNIC)) # 9 
+# gender is 2 
+
+sum(fifteendata$E7) # 470753
+sum(fifteendata$E8) # 465322
+sum(fifteendata$E9) # 487202
+sum(fifteendata$E10) # 488004
+sum(fifteendata$E11) # 472968
+sum(fifteendata$E12) # 492835
+sum(fifteendata$EUS) # 6316
+sum(fifteendata$ETOT) # 1947325
+sum(fifteendata$D7) # 1506
+sum(fifteendata$D8) # 1155 
+sum(fifteendata$D9) # 6952 
+sum(fifteendata$D10) # 5345 
+sum(fifteendata$D11) #8057 
+sum(fifteendata$D12) # 29906
+sum(fifteendata$DUS) # 286
+sum(fifteendata$DTOT) # 50546 
+```
+
+Dropout 2016-2017 
+```{r}
+sixteendata <- read.csv(file="dropout2016_17.csv", header=TRUE)
+length(unique(sixteendata$CDS_CODE)) # 952
+length(unique(sixteendata$ETHNIC)) # 9
+
+sum(sixteendata$E7) # 473574
+sum(sixteendata$E8) # 472340
+sum(sixteendata$E9) # 487547
+sum(sixteendata$E10) # 486085
+sum(sixteendata$E11) # 481521
+sum(sixteendata$E12) # 484169
+sum(sixteendata$EUS) # 6079
+sum(sixteendata$ETOT) # 1945401
+sum(sixteendata$D7) # 1453
+sum(sixteendata$D8) # 1138 
+sum(sixteendata$D9) # 7698 
+sum(sixteendata$D10) # 5743 
+sum(sixteendata$D11) # 7873 
+sum(sixteendata$D12) # 25641
+sum(sixteendata$DUS) # 294
+sum(sixteendata$DTOT) # 47249 
+```
+
+```{r}
+# Now we plot 
+library(ggplot2)
+plot(twelvedata$E7, twelvedata$D7)
+plot(twelvedata$ETHNIC, twelvedata$DTOT)
+qplot(twelvedata$ETHNIC, twelvedata$DTOT)
+
+p <- ggplot(data=elevendata, aes(x=ETHNIC, y=DTOT)) +
+  geom_bar(stat="")
+p
+
+t <- ggplot(data=fifteendata, aes(x=ETHNIC, y=DTOT)) + geom_bar(stat="identity")
+t
+```
+
+We are going to attempt to make a new data frame. We want to make it so that each school name gets one row, not 18, and the total sum is added. We know for one, eah school has 18 observations dedicated to it. There are 8 variables describing dropouts: D7, D8, D9, D10, D11, D12, DUS, DTOT. Since DTOT is the sum of a subset of the others, we will not include it in our calculations. Instead, we will be taking the 18 rows and 7 columns. 
+```{r}
+# we will only do the first two data sets 
+# first i want to see if there is any code that shows you exactly where each school shows up. 
+# according to the pdf about the data, each school may have 1 or more records (rows) but no more than 16 
+# the first thing I've done to move in the right direction is remove the scientific notation so I can see the full code and more easily distinguish each school 
+# we'll start small and then move into doing what we actually want. for example, let's first find out all the dropouts from the first school (code: 1100170109835)
+totS1 <- sum(elevendata$D7[c(1:17)]) + sum(elevendata$D8[c(1:17)]) + sum(elevendata$D9[c(1:17)]) + sum(elevendata$D10[c(1:17)]) + sum(elevendata$D11[c(1:17)]) + sum(elevendata$D12[c(1:17)]) +sum(elevendata$DUS[c(1:17)])
+
+# just realized that instead of adding every D column, I can just add DTOT to D7 and D8 since DTOT is defined as all droupouts exclusind years 7 and 8 
+totS2 <- sum(elevendata$D7[c(1:17)]) + sum(elevendata$D8[c(1:17)]) + sum(elevendata$DTOT[c(1:17)])
+totS2
+
+# Now I know the simple command to add specifc rows in specific columns but there are a couple issues # (1) how do I make this not so tedius
+# (2) how do I know which rows to add 
+
+# we are going to do it by district 
+library(stringr)
+
+#elevendata$District <- elevendata$CDS_CODE
+#elevendata$District <- as.character(elevendata$District)
+#elevendata$District <- substr(elevendata$District, 3,7)
+
+elevendata$county <- elevendata$CDS_CODE
+elevendata$county <- substr(elevendata$county, 1,2)
+
+elevendata$SumDo <- elevendata$DTOT + elevendata$D7 + elevendata$D8
+
+# Now we have a column with the sum of all dropouts for that entry, one step closer to what we want 
+# The goal is to  have a data frame with all 58 districts and the total number of dropouts they had 
+# Let's find which rows hold information for what district 
+
+# Summing the rows of total dropout for district 11 
+row11 <- which(elevendata$county == 11)
+sum(elevendata[row11,23])
+
+#now we make a more general pieec of code 
+counties <- as.numeric(unique(elevendata$county))
+CountiesTotals2011 <- matrix(NA, nrow=length(counties), ncol=2)
+for(i in 1:length(counties)){
+  rowi <- which(elevendata$county == counties[i])
+  CountiesTotals2011[i,2] = sum(elevendata[rowi,23])
+  CountiesTotals2011[i,1] = counties[i]
+}
+CountiesTotals2011
+#This was the original attempt which was not as good but a good starting point 
+#dist1 <- 0
+#for(i in 1:nrow(elevendata)){
+ # if(elevendata$county[i] == "11"){
+  #  dist1 <- dist1 + as.numeric(elevendata$SumDo[i])
+  #} else {
+  #NULL
+  #}
+#}
+
+```
+
+Now we can attempt to do the same with a different data set. This time with data from years 2012 - 2013 
+
+```{r}
+# We want to add the columns we need: SumDo and Counties
+
+# Adding the column of counties 
+twelvedata$County <- twelvedata$CDS_CODE
+twelvedata$County <- substr(twelvedata$County, 1,2)
+
+# Add column SumDo which is the total number of dropouts for that specific population in that school in the county we are looking at (ex: the total number of black boys that dropped at any year in school a in district 11)
+twelvedata$SumDo <- twelvedata$DTOT + twelvedata$D7 + twelvedata$D8
+
+# A for Loop to make a data frame containing every school county and the total number of dropouts they had in the academic year 2012 - 2013 
+
+ListOfCounties2012 <- as.numeric(unique(twelvedata$County)) # A list of the unique county codes 
+CountiesTotals2012 <- matrix(NA, nrow=length(ListOfCounties2012), ncol=2) # an empty matrix to be populated with the county codes and their respective dropout rates 
+for(i in 1:length(ListOfCounties2012)){ 
+  rowi <- which(twelvedata$County == ListOfCounties2012[i]) # finding the rows with the same county code 
+  CountiesTotals2012[i,2] = sum(twelvedata[rowi,22]) # summing the total number of dropouts and populating our previously empty dataframe 
+  CountiesTotals2012[i,1] = ListOfCounties2012[i] # labeling the dropout rates by their county 
+}
+CountiesTotals2012 # printing our new data frame 
+```
+
+### Sunday work: making bar graphs 
+
+The first step is really to figure out how many dropouts there were TOTAL for each of our academic years. Then, we can figure out how to see how many of those dropouts are male and how many are female. So I guess technically the first step is to make a new data set with all this information, but to do this, I will first do the data frames with counties and total drop out for each year. 
+```{r}
+# First step is to make similar data frames for all years
+# I've already done 2011 and 2012, so all that is left is 2013, 2014, and 2015 
+
+
+```

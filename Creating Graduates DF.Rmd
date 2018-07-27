@@ -1,0 +1,157 @@
+---
+title: 'Dropout Data (Part IV: Free Reduced Lunch)'
+author: "Cristal Quiñones"
+date: "7/11/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#Load data set into R 
+calpads1314 <- read.csv(file="cupc1314SchoolLevelUPC.csv", header=TRUE)
+calpads1415 <- read.csv(file="cupc1415SchoolLevel.csv", header=TRUE)
+calpads1516 <- read.csv(file="cupc1516SchoolLevel.csv", header=TRUE)
+calpads1617 <- read.csv(file="cupc1617SchoolLevel.csv", header=TRUE)
+
+# Manipulate dataframes to only important variables 
+CPInfo1314 <- calpads1314[,c(1:3,16,17,18,24)]
+CPInfo1415 <- calpads1415[,c(1:3,16,17,18,24)]
+CPInfo1516 <- calpads1516[,c(1:3,16,17,18,24)]
+CPInfo1617 <- calpads1617[,c(1:3,16,17,18,24)]
+
+# the variable names are too long and unclear, we'll fix that right now. 
+colnames(CPInfo1314) <- c("academicYear","countyCode","distCode","FreeReduced","EnglishLearner","FosterYouth","UPCTotal")
+colnames(CPInfo1415) <- c("academicYear","countyCode","distCode","FreeReduced","EnglishLearner","FosterYouth","UPCTotal")
+colnames(CPInfo1516) <- c("academicYear","countyCode","distCode","FreeReduced","EnglishLearner","FosterYouth","UPCTotal")
+colnames(CPInfo1617) <- c("academicYear","countyCode","distCode","FreeReduced","EnglishLearner","FosterYouth","UPCTotal")
+
+# format the year 
+CPInfo1415$academicYear <- as.character(CPInfo1415$academicYear)
+CPInfo1415$academicYear[CPInfo1415$academicYear == "2014-2015"] <- "2014-15"
+
+CPInfo1516$academicYear <- as.character(CPInfo1516$academicYear)
+CPInfo1516$academicYear[CPInfo1516$academicYear == "2015-2016"] <- "2015-16"
+
+CPInfo1617$academicYear <- as.character(CPInfo1617$academicYear)
+CPInfo1617$academicYear[CPInfo1617$academicYear == "2016-2017"] <- "2016-17"
+
+# stack data so all years are in one data frame 
+CPInfoCombined <- rbind(CPInfo1314, CPInfo1415, CPInfo1516, CPInfo1617)
+#removing an entry that has no information (all empty or NA entries)
+CPInfoCombined <- CPInfoCombined[-c(10359),]
+
+# making all the variables numeric
+CPInfoCombined$FreeReduced <- as.numeric(CPInfoCombined$FreeReduced)
+CPInfoCombined$EnglishLearner <- as.numeric(CPInfoCombined$EnglishLearner)
+CPInfoCombined$FosterYouth <- as.numeric(CPInfoCombined$FosterYouth)
+is.na(CPInfoCombined$FosterYouth) <- 0
+CPInfoCombined$UPCTotal <- as.numeric(CPInfoCombined$UPCTotal)
+
+# aggregate
+CPInfoCombinedFreeReduced <- aggregate(FreeReduced~academicYear+countyCode+distCode, data=CPInfoCombined,sum)
+CPInfoCombinedEnglishLearner <- aggregate(EnglishLearner~academicYear+countyCode+distCode, data=CPInfoCombined,sum)
+CPInfoCombinedFosterYouth <- aggregate(FosterYouth~academicYear+countyCode+distCode, data=CPInfoCombined,sum)
+CPInfoCombinedUPCTotal <- aggregate(UPCTotal~academicYear+countyCode+distCode, data=CPInfoCombined,sum)
+
+# Change district code and academic year to one variable dist_year 
+CPInfoCombinedFreeReduced$dist_year <- paste(CPInfoCombinedFreeReduced$distCode, CPInfoCombinedFreeReduced$academicYear, sep = "_")
+CPInfoCombinedFreeReduced <- CPInfoCombinedFreeReduced[,-c(1:3)]
+
+CPInfoCombinedEnglishLearner$dist_year <- paste(CPInfoCombinedEnglishLearner$distCode, CPInfoCombinedEnglishLearner$academicYear, sep = "_")
+CPInfoCombinedEnglishLearner <- CPInfoCombinedEnglishLearner[,-c(1:3)]
+
+CPInfoCombinedFosterYouth$dist_year <- paste(CPInfoCombinedFosterYouth$distCode, CPInfoCombinedFosterYouth$academicYear,sep="_")
+CPInfoCombinedFosterYouth <- CPInfoCombinedFosterYouth[,-c(1:3)]
+
+CPInfoCombinedUPCTotal$dist_year <- paste(CPInfoCombinedUPCTotal$distCode, CPInfoCombinedUPCTotal$academicYear,sep="_")
+CPInfoCombinedUPCTotal <- CPInfoCombinedUPCTotal[,-c(1:3)]
+
+
+#Now, we merge 
+
+CPInfo1 <- merge(CPInfoCombinedEnglishLearner,CPInfoCombinedFreeReduced, by="dist_year")
+cp_demo <- merge(CPInfo1, CPInfoCombinedFosterYouth, by="dist_year")
+
+
+write.csv(cp_demo, file="/Users/owner/cp_demo.csv")
+```
+
+```{r}
+# UC/CSU Grads 
+options(scipen=999)
+
+grads1314 <- read.csv(file="grads1314.csv", header=TRUE)
+grads1415 <- read.csv(file="grads1415.csv", header=TRUE)
+grads1516 <- read.csv(file="grads1516.csv", header=TRUE)
+grads1617 <- read.csv(file="grads1617.csv", header=TRUE)
+
+gradsCombined <- rbind(grads1314,grads1415,grads1516,grads1617)
+
+gradsCombined$YEAR <- as.character(gradsCombined$YEAR)
+gradsCombined$YEAR[gradsCombined$YEAR == 1314] <- "2013-14"
+gradsCombined$YEAR[gradsCombined$YEAR == 1415] <- "2014-15"
+gradsCombined$YEAR[gradsCombined$YEAR == 1516] <- "2015-16"
+gradsCombined$YEAR[gradsCombined$YEAR == 1617] <- "2016-17"
+
+gradsCombined <- gradsCombined[,-c(4)]
+
+gradsCombined$districtcode <- gradsCombined$CDS_CODE
+gradsCombined$districtcode <- substr(gradsCombined$CDS_CODE, 3,7)
+
+gradsCombined <- gradsCombined[,-c(1)]
+
+gradsCombined$ETHNIC <- as.character(gradsCombined$ETHNIC)
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 5] <- "Hispanic or Latino"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 6] <- "Black"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 7] <- "White"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 2] <- "Asian"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 0] <- "Other"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 1] <- "Other"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 3] <- "Other"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 4] <- "Other"
+gradsCombined$ETHNIC[gradsCombined$ETHNIC == 9] <- "Other"
+
+# We'll look at ethnicities first 
+EthnicityGraduatesByDistrict <- gradsCombined[,c(1,3,4,5)]
+EthnicityGraduatesByDistrict$dist_year <- paste(EthnicityGraduatesByDistrict$districtcode, EthnicityGraduatesByDistrict$YEAR, sep = "_")
+EthnicityGraduatesByDistrict <- EthnicityGraduatesByDistrict[,-c(3,4)] 
+
+
+graduatetotalsETH <- aggregate(UC_GRADS~dist_year+ETHNIC, data=EthnicityGraduatesByDistrict, sum)
+
+graduatetotalsAsian <- filter(graduatetotalsETH, graduatetotalsETH$ETHNIC == "Asian")
+colnames(graduatetotalsAsian) <- c("dist_year","lab","ucCsu_asian")
+graduatetotalsAsian <- graduatetotalsAsian[,-c(2)]
+
+graduatetotalsBlack <- filter(graduatetotalsETH, graduatetotalsETH$ETHNIC == "Black")
+colnames(graduatetotalsBlack) <- c("dist_year","lab","ucCsu_black")
+graduatetotalsBlack <- graduatetotalsBlack[,-c(2)]
+
+
+graduatetotalsHisp <- filter(graduatetotalsETH, graduatetotalsETH$ETHNIC == "Hispanic or Latino")
+colnames(graduatetotalsHisp) <- c("dist_year","lab","ucCsu_hisp")
+graduatetotalsHisp <- graduatetotalsHisp[,-c(2)]
+
+graduatetotalsWhite <- filter(graduatetotalsETH, graduatetotalsETH$ETHNIC == "White")
+colnames(graduatetotalsWhite) <- c("dist_year","lab","ucCsu_white")
+graduatetotalsWhite <- graduatetotalsWhite[,-c(2)]
+
+graduatetotalsOther <- filter(graduatetotalsETH, graduatetotalsETH$ETHNIC == "Other")
+colnames(graduatetotalsOther) <- c("dist_year","lab","ucCsu_other")
+graduatetotalsOther <- graduatetotalsOther[,-c(2)]
+
+grad_ethnicity1 <- merge(graduatetotalsAsian, graduatetotalsBlack, by="dist_year")
+grad_ethnicity2 <- merge(grad_ethnicity1, graduatetotalsHisp, by="dist_year")
+grad_ethnicity3 <- merge(grad_ethnicity2, graduatetotalsWhite, by="dist_year")
+ucCsu_ethnicity <- merge(grad_ethnicity3, graduatetotalsOther, by="dist_year")
+
+# Now we will do gender 
+
+```
+
+filter(dropouttotalsGEN, dropouttotalsGEN$GENDER == "F")
+colnames(dropouttotalsFEM) <- c("do_female","do_female","dist_year")
+dropouttotalsFEM <- dropouttotalsFEM[,-c(1)]
+
+

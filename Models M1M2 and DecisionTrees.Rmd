@@ -1,0 +1,230 @@
+---
+title: "Clean Code"
+author: "Cristal Quiñones"
+date: "7/19/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+So, I have been using "as.integer" becuase I did not know not to, and now I have to redo my models. This is the code to do so. 
+The things we will do here:
+1. Model (One) Graduates with Dropouts, Suspensions, Expulsions, English Learner, Free/Reduced Lunch, and Foster
+2. Model (Two) Graduates with every variables except graduate demographics 
+3. Check collinearity for Model 1
+4. Check collinearity for Model 2 (o)
+5. Model One with standardized and normalized data 
+6. Model Two with standardized and normalized data 
+7. Model One broken down by gender with standardized and normalized data 
+8. Model One broken down by ethnicity with standardized and normalized data 
+9. For each one of the models, use stargazed to export a latex table with the coefficient, p-value, and standard error 
+
+```{r}
+library(dplyr)
+library(stargazer)
+library(readxl)
+library(ggplot2)
+library(GGally)
+library(MASS)
+library(corpcor)
+library(mctest)
+library(ppcor)
+library(BBmisc)
+
+sourceDF <- read.csv(file="Sus_Ex_Do_en_cp_ucCsu_DEMO.csv", header=T)
+sourceDF <- sourceDF[,-c(1,38)] # remove index and county 
+sourceDF$do_total <- sourceDF$do_female + sourceDF$do_male
+write.csv(sourceDF, file="/Users/owner/sus_ex_en_cp_uccsu_DEMO.csv")
+
+sourceDF <- na.omit(sourceDF)
+
+
+#--------------------------Model One--------------------------------------
+modelone <- lm(ucCsu_total~do_total+TotalSuspensions+Expulsion_Total+EnglishLearner+FreeReduced+Foster, data = sourceDF)
+
+stargazer(modelone, dep.var.labels = c("UC/CSU Eligible Grduates"), covariate.labels = c("Dropout","Suspension","Expulsion","English Learner","Free or Reduced Lunch","Foster Youth"), report = ('vcps'), out="modelone.tex") # printing data table for latex 
+
+#-------------------------Model Two---------------------------------------
+modeltwoDF <- sourceDF[,-c(1, 12:18)] # data frame without dist_year and UC/CSU demographic variables
+modeltwo <- lm(ucCsu_total~., data = modeltwoDF)
+stargazer(modeltwo, dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Enrolled (Asian)","Enrolled (Black)","Enrolled (Hispanic)","Enrolled (White)","Enrolled (Other)","Enrolled (Female)","Enrolled (Male)","English Learner","Free or Reduced Lunch","Foster Youth", "Enrolled","Suspension (Female)","Suspension (Male)","Suspension","Suspension (Asian)","Suspension (Black)","Suspension (Hispanic)","Suspension (White)","Suspension (Other)","Expulsion (Female)","Expulsion (Male)","Expulsion","Expulsion (Asian)","Expulsion (Black)","Expulsion (Hispanic)","Expulsion (White)", "Expulsion (Other)","Dropout (Asian)","Dropout (Black)","Dropout (Hispanic)","Dropout (White)", "Dropout (Other)","Dropout (Female)","Dropout (Male)","Dropout"), report = ('vc*p*s'), out="modeltwo.tex")
+
+#-----------------------Model Two without Enrollment----------------------------
+modeltwoDFNoEn <- modeltwoDF[,-c(1:7,11)] # data frame without district yr, UCCSU, or enroll
+modeltwoNoEn <- lm(ucCsu_total~., data = modeltwoDFNoEn)
+stargazer(modeltwoNoEn, dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("English Learner","Free or Reduced Lunch","Foster Youth","Suspension (Female)","Suspension (Male)","Suspension","Suspension (Asian)","Suspension (Black)","Suspension (Hispanic)","Suspension (White)","Suspension (Other)","Expulsion (Female)","Expulsion (Male)","Expulsion","Expulsion (Asian)","Expulsion (Black)","Expulsion (Hispanic)","Expulsion (White)", "Expulsion (Other)","Dropout (Asian)","Dropout (Black)","Dropout (Hispanic)","Dropout (White)", "Dropout (Other)","Dropout (Female)","Dropout (Male)","Dropout"), report = ('vc*p*s'), out="modeltwoNoEn.tex")
+
+#-----------------------Check collinearity: Model One---------------------
+X <- sourceDF[,c(44,23,31,9,10,11)] # the columns we used for our linear model 
+ggpairs(X) # shows that EnglishLearner and FRLunch seem colinear 
+cor2pcor(cov(X)) # correlation matrix shows pair-wise corr among explanatory var not high, except for english learners-Free Reduced Lunch
+omcdiag(X, sourceDF$ucCsu_total) # the value of standardized determinant is .01 (small) indicating a strong degree of multicollinearity.Chi-square test statistic is 335.6651 which is significant which all indicates multicollinearity in the model 
+imcdiag(X,sourceDF$ucCsu_total) # English Learners, Free/Reduced Lunch have pretty high F-Statistics, the strongest being Free/Reduced Lunch followed by english learner
+pcor(X, method = "pearson") # high partial correlation between: Free Reduced Lunch & English Learners
+
+#----------------------Model One addressing Collinearity (no FRLunch)-----
+modeloneFRL <- lm(ucCsu_total~do_total+TotalSuspensions+Expulsion_Total+EnglishLearner+Foster, data = sourceDF)
+stargazer(modelone, dep.var.labels = c("UC/CSU Eligible Grduates"), covariate.labels = c("Dropout","Suspension","Expulsion","English Learner","Foster Youth"), report = ('vc*p*s'), out="modelone.tex")
+
+#----------------------Model One addressing Collinearity (no EL)----------
+modeloneEL <- lm(ucCsu_total~do_total+TotalSuspensions+Expulsion_Total+FreeReduced+Foster, data = sourceDF)
+stargazer(modelone, dep.var.labels = c("UC/CSU Eligible Grduates"), covariate.labels = c("Dropout","Suspension","Expulsion","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out="modeloneEL.tex")
+
+#-----------------------Check collinearity: Model Two---------------------
+# not yet....too many variables
+
+#-----------------------Relitavizing sourceDF Data-------------------------
+# We're dividing every clumn by the corresponding enrollment column 
+fr <- sourceDF
+
+fr$EnglishLearnerrel <- fr$EnglishLearner/fr$enroll_total 
+fr$FreeReducedrel <- fr$FreeReduced/fr$enroll_total
+fr$Fosterrel <- fr$Foster/fr$enroll_total
+fr$TotalSuspensionsrel <- fr$TotalSuspensions/fr$enroll_total
+fr$do_totalrel <- fr$do_total/fr$enroll_total
+fr$ucCsu_totalrel <- fr$ucCsu_total/fr$enroll_total
+fr$Expulsion_Totalrel <- fr$Expulsion_Total/fr$enroll_total
+
+fr$FemaleSuspensionsrel <- fr$FemaleSuspensions/fr$enroll_female
+fr$do_femalerel <- fr$do_female/fr$enroll_female
+fr$ucCsu_femalerel <- fr$ucCsu_female/fr$enroll_female
+fr$Expulsion_Femalerel <- fr$Expulsion_Female/fr$enroll_female
+
+fr$MaleSuspensionsrel <- fr$MaleSuspensions/fr$enroll_male
+fr$do_malerel <- fr$do_male/fr$enroll_male
+fr$ucCsu_malerel <- fr$ucCsu_male/fr$enroll_male
+fr$Expulsion_Malerel <- fr$Expulsion_Male/fr$enroll_male
+
+fr$AsianSuspensionrel <- fr$AsianSuspensions/fr$enroll_asian
+fr$do_asianrel <- fr$do_asian/fr$enroll_asian
+fr$ucCsu_asianrel <- fr$ucCsu_asian/fr$enroll_asian
+fr$Expulsion_Asianrel <- fr$Expulsion_Asian/fr$enroll_asian
+
+fr$BlackSuspensionsrel <- fr$BlackSuspensions/fr$enroll_black
+fr$do_blackrel <- fr$do_black/fr$enroll_black
+fr$ucCsu_blackrel <- fr$ucCsu_black/fr$enroll_black
+fr$Expulsion_Blackrel <- fr$Expulsion_Black/fr$enroll_black
+
+fr$HispanicSuspensionsrel <- fr$HispanicSuspensions/fr$enroll_hisp
+fr$do_hisprel <- fr$do_hisp/fr$enroll_hisp
+fr$ucCsu_hisprel <- fr$ucCsu_hisp/fr$enroll_hisp
+fr$Expulsion_Hispanicrel <- fr$Expulsion_Hispanic/fr$enroll_hisp
+
+fr$WhiteSuspensionsrel <- fr$WhiteSuspensions/fr$enroll_white
+fr$do_whiterel <- fr$do_white/fr$enroll_white
+fr$ucCsu_whiterel <- fr$ucCsu_white/fr$enroll_white
+fr$Expulsion_Whiterel <- fr$Expulsion_White/fr$enroll_white
+
+fr$OtherSuspensionsrel <- fr$OtherSuspensions/fr$enroll_total
+fr$do_otherrel <- fr$do_other/fr$enroll_total
+fr$ucCsu_otherrel <- fr$ucCsu_other/fr$enroll_total
+fr$Expulsion_Otherrel <- fr$Expulsion_Other/fr$enroll_total
+
+RELsourceDF <- fr[,c(1,45:79)] # to use instead of the regular standardized and normalized data 
+write.csv(RELsourceDF, file="/Users/owner/relativeCompleteMerge.csv")
+
+#------------------Standardizing and Normalizing sourceDF Data------------
+dist_year <-as.character(sourceDF$dist_year) # we will append it after manipulating the variable values 
+justvalues <- sourceDF[,-c(1)] #identical df sans dist_year 
+zjustvalues <- scale(justvalues, center = TRUE, scale = TRUE) # scaled data https://stat.ethz.ch/R-manual/R-devel/library/base/html/scale.html 
+nzjustvalues <- normalize(zjustvalues, method = 'range', range = c(0,1)) # norm data https://www.rdocumentation.org/packages/BBmisc/versions/1.10/topics/normalize
+
+test1 <- as.data.frame(nzjustvalues) # converting the standardized and normalized just values into a data frame 
+nzsourceDF <- cbind(dist_year,test1) # data frame with all the values and dist_year (as "factor")
+write.csv(nzsourceDF, file="/Users/owner/nzsourceDF.csv")
+
+#--------------------Model One (Standardized and Normalized)-------------
+modeloneNZ <- lm(ucCsu_total~do_total+TotalSuspensions+Expulsion_Total+EnglishLearner+FreeReduced+Foster, data = nzsourceDF)
+stargazer(modeloneNZ, type="latex", dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropouts","Suspensions","Expulsions","English Learners","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out = "modeloneNZ.tex")
+
+#---------------------Model One (Relative Data)--------------------------
+modeloneREL <- lm(ucCsu_totalrel~do_totalrel+TotalSuspensionsrel+Expulsion_Totalrel+EnglishLearnerrel+FreeReducedrel+Fosterrel, data = RELsourceDF)
+stargazer(modeloneREL, type="latex", dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropouts","Suspensions","Expulsions","English Learners","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out = "modeloneREL.tex")
+
+#--------------------Model Two (Standardized and Normalized)-------------
+modeltwoDFNZ <- nzsourceDF[,-c(1,12:18)] # normalized data for model two 
+modeltwoNZ <- lm(ucCsu_total~., data = modeltwoDFNZ)
+modeltwoNZmb <- lm(modeltwoDFNZ$ucCsu_total~., data = modeltwoDFNZ[,c(-12)])
+stargazer(modeltwoNZ, dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Enrolled (Asian)","Enrolled (Black)","Enrolled (Hispanic)","Enrolled (White)","Enrolled (Other)","Enrolled (Female)","Enrolled (Male)","English Learner","Free or Reduced Lunch","Foster Youth", "Enrolled","Suspension (Female)","Suspension (Male)","Suspension","Suspension (Asian)","Suspension (Black)","Suspension (Hispanic)","Suspension (White)","Suspension (Other)","Expulsion (Female)","Expulsion (Male)","Expulsion","Expulsion (Asian)","Expulsion (Black)","Expulsion (Hispanic)","Expulsion (White)", "Expulsion (Other)","Dropout (Asian)","Dropout (Black)","Dropout (Hispanic)","Dropout (White)", "Dropout (Other)","Dropout (Female)","Dropout (Male)","Dropout"), report = ('vcps'), out="modeltwoNF.tex")
+
+#----------------Model Two (Relative Data - No enrollment)-----------------------
+modeltwoDFREL <- RELsourceDF[,-c(1,11,15,19,23,27,31,35)] # relative data without dist year, uccsu, or enroll(already not included in realative data frame)
+modeltwoREL<- lm(ucCsu_totalrel~., data = modeltwoDFREL)
+stargazer(modeltwoREL, dep.var.labels = c("UC/CSU Eligible Graduates"), report = ('vc*p*s'), out="modeltwoREL.tex")
+
+#--------------------Model One by Gender (Stan & Norm)------------------
+modeloneGEN <- lm(ucCsu_total~do_female+do_male+FemaleSuspensions+MaleSuspensions+Expulsion_Female+Expulsion_Male+EnglishLearner+FreeReduced+Foster, data=nzsourceDF)
+stargazer(modeloneGEN, type = "latex", dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropout (Female)","Dropout (Male)","Suspension (Female)","Suspension (Male)","Expulsion (Female)","Expulsion (Male)","English Learner","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out="modeloneGENNZ.tex") # export model as latex table
+
+#-------------------Model One by Gender (realtive data)----------------
+modeloneGENREL <- lm(ucCsu_totalrel~do_femalerel+do_malerel+FemaleSuspensionsrel+MaleSuspensionsrel+Expulsion_Femalerel+Expulsion_Malerel+EnglishLearnerrel+FreeReducedrel+Fosterrel, data=RELsourceDF)
+stargazer(modeloneGENREL, type = "latex", dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropout (Female)","Dropout (Male)","Suspension (Female)","Suspension (Male)","Expulsion (Female)","Expulsion (Male)","English Learner","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out="modeloneGENREL.tex") 
+
+#-------------------Model One by Ethnicity (Stan & Norm)----------------
+modeloneETH <- lm(ucCsu_total~do_asian+do_black+do_hisp+do_white+do_other+Expulsion_Asian+Expulsion_Black+Expulsion_Hispanic+Expulsion_White+Expulsion_Other+AsianSuspensions+BlackSuspensions+HispanicSuspensions+WhiteSuspensions+OtherSuspensions+EnglishLearner+FreeReduced+Foster,data=nzsourceDF)
+stargazer(modeloneETH, type="latex",dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropout (Asian)","Dropout (Black)","Dropout (Hispanic)","Dropout (White)","Dropout (Other)", "Expulsion (Asian)","Expulsion (Black)","Expulsion (Hispanic)","Expulsion (White)","Expulsion (Other)", "Suspension (Asian)","Suspension (Black)","Suspension (Hispanic)","Suspension (White)","Suspension (Other)","English Learner","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out = "modeloneethnicNZ.tex")
+
+#-----------------Model One by Ethnicity (Realtive Data)---------------
+modeloneETHREL <- lm(ucCsu_totalrel~do_asianrel + do_blackrel + do_hisprel + do_whiterel + do_otherrel + Expulsion_Asianrel + Expulsion_Blackrel + Expulsion_Hispanicrel + Expulsion_Whiterel + Expulsion_Otherrel + AsianSuspensionrel + BlackSuspensionsrel + HispanicSuspensionsrel + WhiteSuspensionsrel + OtherSuspensionsrel + EnglishLearnerrel + FreeReducedrel + Fosterrel ,data=RELsourceDF)
+
+stargazer(modeloneETHREL, type="latex",dep.var.labels = c("UC/CSU Eligible Graduates"), covariate.labels = c("Dropout (Asian)","Dropout (Black)","Dropout (Hispanic)","Dropout (White)","Dropout (Other)", "Expulsion (Asian)","Expulsion (Black)","Expulsion (Hispanic)","Expulsion (White)","Expulsion (Other)", "Suspension (Asian)","Suspension (Black)","Suspension (Hispanic)","Suspension (White)","Suspension (Other)","English Learner","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out = "modeloneethnicREL.tex")
+
+#-----------------------Model One Fixed for Collinearity (Standardized)----------
+modeloneELnz <- lm(ucCsu_total~do_total+TotalSuspensions+Expulsion_Total+FreeReduced+Foster, data = nzsourceDF)
+stargazer(modelone, dep.var.labels = c("UC/CSU Eligible Grduates"), covariate.labels = c("Dropout","Suspension","Expulsion","Free or Reduced Lunch","Foster Youth"), report = ('vc*p*s'), out="modeloneELnz.tex")
+
+```
+
+```{r}
+#-------------------------------Checking % graduated per district----------------
+yearGradEnrollDF <- sourceDF[,c(1,40,44)]
+yearGradEnrollDF$year <- substr(yearGradEnrollDF$dist_year, 7,13)
+yearGradEnrollDF$dist <- as.numeric(substr(yearGradEnrollDF$dist_year, 1,5)) 
+yearGradEnrollDF <- yearGradEnrollDF[,-c(1)]
+
+GradAgg <- aggregate(ucCsu_total~dist, data = yearGradEnrollDF, sum)
+EnrollAgg <- aggregate(enroll_tot~dist, data = yearGradEnrollDF, sum)
+
+GradEnrollTot <- merge(GradAgg, EnrollAgg, by="dist")
+GradEnrollTot <- transform(GradEnrollTot, p = (ucCsu_total / enroll_tot)) 
+GradEnrollTot$p <- GradEnrollTot$p*100
+
+# the only issue with this data frame is that the number of years per district varies but if it's a percent maybe it doesn't matter?
+
+write.csv(GradEnrollTot, file="/Users/owner/percentgraduated.csv")
+
+``` 
+
+
+Now, we will do Decision trees. 
+We will do this with relative data that does not contain enrollment information (model two) 
+```{r}
+library(tree)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+
+#tree1 <- tree(ucCsu_totalrel~., data = modeltwoDFREL)
+#plot(tree1)
+#text(tree1, cex = .3)
+#summary(tree1)
+
+rpart1 <- rpart(ucCsu_totalrel~., data = modeltwoDFREL, method = "anova")
+printcp(rpart1)
+plotcp(rpart1)
+
+plot(rpart1, uniform = T, main = "Regression Tree")
+text(rpart1, use.n = T, all = T, cex = 0.8)
+
+pruned <- prune(rpart1, cp=0.04)
+plot(pruned)
+text(pruned, cex = .75, use.n = F, all = T, label=c('test'))
+prp(pruned, faclen = 5)
+
+
+plot(modeltwoDFREL$MaleSuspensionsrel, modeltwoDFREL$ucCsu_totalrel) # plot next to the tree - there is no linearity but the deicsion tree tels you there is a realtionship between male suspension and graduates that linear models do not tell you but you could explore further 
+
+plot <- ggplot(modeltwoDFREL, aes(MaleSuspensionsrel, ucCsu_totalrel)) + geom_point() + labs(title = "Male Suspensions vs. UC/CSU Eligible Graduates", subtitle = "Using Enrollment Normalized Data", x = "Male Suspensions", y = "UC/CSU Eligible Graduates") + theme(plot.title = element_text(hjust=0.5), plot.subtitle = element_text(hjust = 0.5)) 
+
+plot(plot)
+
+```

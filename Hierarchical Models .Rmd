@@ -1,0 +1,178 @@
+---
+title: "Hierarchical Models"
+author: "Cristal Quiñones"
+date: "7/23/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+In this R Markdown, we will run Hierarchical modeling. We will begin by looking at individual years. 
+Begin by making a data frame with 3 variables: the number of dropouts, the ethnicity/gender (so we will have 2 data frames), and school 
+
+```{r}
+library(lme4) # package to run models 
+library(lmerTest) # package to give p values for analyses which lme4 does not automatically do 
+library(dplyr) # to use the filter function 
+library(reshape2) # to use "cast" function 
+library(reshape)
+library(stargazer) # to export data 
+
+options(scipen = 999)
+dropoutsin2011 <- read.csv(file="dropout2011_12.csv", header = T, as.is = T) # load the data 
+
+dropoutsin2011$DropoutTotal <- dropoutsin2011$DTOT + dropoutsin2011$D7 + dropoutsin2011$D8 # adding a column of dropout totals 
+
+HMLGENDF <- dropoutsin2011[,c(2, 4, 22)] # creating new data frame with "CDS_CODE" which we will use to identify the school, gender, and DropoutTotal 
+HMLETHDF <- dropoutsin2011[,c(2,3, 22)] # same but with ethnicity instead of gender
+
+HMLGENDF$GENDER[HMLGENDF$GENDER == "M"] <- 0
+HMLGENDF$GENDER[HMLGENDF$GENDER == "F"] <- 1
+HMLGENDF$GENDER <- as.numeric(HMLGENDF$GENDER)
+
+HMLETHDF$ETHNIC[HMLETHDF$ETHNIC == 0] <- 11
+HMLETHDF$ETHNIC[HMLETHDF$ETHNIC == 1] <- 11
+HMLETHDF$ETHNIC[HMLETHDF$ETHNIC == 3] <- 11
+HMLETHDF$ETHNIC[HMLETHDF$ETHNIC == 4] <- 11
+HMLETHDF$ETHNIC[HMLETHDF$ETHNIC == 9] <- 11
+
+GenderDropouts <- aggregate(DropoutTotal~CDS_CODE+GENDER, data= HMLGENDF, sum)
+EthnicDropouts <- aggregate(DropoutTotal~CDS_CODE+ETHNIC, data= HMLETHDF, sum)
+
+#-------- Now that we have the data frames containing the information we need, we will run a hierarchical linear model (also called a multilevel model)------------------------------
+mlmodelgenTEST <- lmer(DropoutTotal~1 + 1 | CDS_CODE, GenderDropouts) # is there variability in dropout amongst schools, the intercept is the average dropout across schools, the variance component (standard deviation) tells us how much dropout varies from school to school 
+summary(mlmodelgenTEST) # The residual reads 118.5. sd of intercept is 30.21, sd of residual is 10.89 so 
+#---------------------------------------------------
+mlmodelethTEST <- lmer(DropoutTotal ~ 1 + 1 | CDS_CODE, EthnicDropouts)
+summary(mlmodelethTEST) 
+
+#----------------Now for 2012-13----------------------------------------------- 
+dropoutsin2012 <- read.csv(file="dropouttwelve.csv", header = T, as.is = T) # load the data 
+
+dropoutsin2012$DropoutTotal <- dropoutsin2012$DTOT + dropoutsin2012$D7 + dropoutsin2012$D8 # adding a column of dropout totals 
+
+hlmgen2012df <- dropoutsin2012[,c(1, 3, 21)] # creating new data frame with "CDS_CODE" which we will use to identify the school, gender, and DropoutTotal 
+hlmeth2012df <- dropoutsin2012[,c(1,2,21)] # same but with ethnicity instead of gender
+
+hlmgen2012df$GENDER[hlmgen2012df$GENDER == "M"] <- 0
+hlmgen2012df$GENDER[hlmgen2012df$GENDER == "F"] <- 1
+hlmgen2012df$GENDER <- as.numeric(hlmgen2012df$GENDER)
+
+hlmeth2012df$ETHNIC[hlmeth2012df$ETHNIC == 0] <- 11
+hlmeth2012df$ETHNIC[hlmeth2012df$ETHNIC == 1] <- 11
+hlmeth2012df$ETHNIC[hlmeth2012df$ETHNIC == 3] <- 11
+hlmeth2012df$ETHNIC[hlmeth2012df$ETHNIC == 4] <- 11
+hlmeth2012df$ETHNIC[hlmeth2012df$ETHNIC == 9] <- 11
+
+GenderDropouts2012 <- aggregate(DropoutTotal~CDS_CODE+GENDER, data= hlmgen2012df, sum)
+EthnicDropouts2012 <- aggregate(DropoutTotal~CDS_CODE+ETHNIC, data= hlmeth2012df, sum)
+
+mlmodelgen2012 <- lmer(DropoutTotal ~ 1 + 1 | CDS_CODE, GenderDropouts2012)
+summary(mlmodelgen2012)
+
+mlmodeleth2012 <- lmer(DropoutTotal ~ 1 + 1 | CDS_CODE, EthnicDropouts2012)
+summary(mlmodeleth2012)
+
+#----------------------2013 - 2014 -----------------------------------------------
+dropoutsin2013 <- read.csv(file="dropout2013_14.csv", header = T, as.is = T) # load the data 
+
+dropoutsin2013$DropoutTotal <- dropoutsin2013$DTOT + dropoutsin2013$D7 + dropoutsin2013$D8 # adding a column of dropout totals 
+
+hlmgen2013df <- dropoutsin2013[,c(1,3,21)] # creating new data frame with "CDS_CODE" which we will use to identify the school, gender, and DropoutTotal 
+hlmeth2013df <- dropoutsin2013[,c(1,2,21)] # same but with ethnicity instead of gender
+
+hlmgen2013df$GENDER[hlmgen2013df$GENDER == "M"] <- 0
+hlmgen2013df$GENDER[hlmgen2013df$GENDER == "F"] <- 1
+hlmgen2013df$GENDER <- as.numeric(hlmgen2013df$GENDER)
+
+hlmeth2013df$ETHNIC[hlmeth2013df$ETHNIC == 0] <- 11
+hlmeth2013df$ETHNIC[hlmeth2013df$ETHNIC == 1] <- 11
+hlmeth2013df$ETHNIC[hlmeth2013df$ETHNIC == 3] <- 11
+hlmeth2013df$ETHNIC[hlmeth2013df$ETHNIC == 4] <- 11
+hlmeth2013df$ETHNIC[hlmeth2013df$ETHNIC == 9] <- 11
+
+GenderDropouts2013 <- aggregate(DropoutTotal~CDS_CODE+GENDER, data= hlmgen2013df, sum)
+EthnicDropouts2013 <- aggregate(DropoutTotal~CDS_CODE+ETHNIC, data= hlmeth2013df, sum)
+
+mlmodelgen2013 <- lmer(DropoutTotal ~ 1 + 1 | CDS_CODE, GenderDropouts2013)
+summary(mlmodelgen2013)
+
+mlmodeleth2013 <- lmer(DropoutTotal ~ 1 + 1 | CDS_CODE, EthnicDropouts2013)
+summary(mlmodeleth2013)
+
+#---------------- We'll do the model again but this time with means------
+#----------------Update - this gives you a data frame NewNewGenerDropouts which is exactly the same column but repeated since the example we were going off of took the mean bc they had multiple "female" and "male" columns but we only have one 
+# this new data frame should have the group mean for male and female, as well as the graduating outcome so we can see how much the number of gradutating students is dependent on the dropouts by gender 
+# To begin the process, we start by making "Female" and "Male" dropout columns 
+# Remember, in GenderDropouts, 0 is M and 1 is F 
+FemaleDropouts <- filter(GenderDropouts, GenderDropouts$GENDER == 1) # matrix with only female dropouts 
+colnames(FemaleDropouts) <- c("CDS_CODE", "B","FEMALEDO")
+FemaleDropouts <- FemaleDropouts[,-c(2)]
+MaleDropouts <- filter(GenderDropouts, GenderDropouts$GENDER == 0) # matrix with only male dropouts 
+colnames(MaleDropouts) <- c("CDS_CODE","B","MALEDO")
+MaleDropouts <- MaleDropouts[,-c(2)]
+
+NewGenderDropouts <- merge(FemaleDropouts, MaleDropouts, by="CDS_CODE") # data frame with columns describing the number of female suspensions nad male suspensions for each school 
+
+groupmeanFEM <- aggregate(NewGenderDropouts$FEMALEDO, list(NewGenderDropouts$CDS_CODE), FUN = mean, data=NewGenderDropouts)
+names(groupmeanFEM)<- c('CDS_CODE','groupmeanFEM')
+groupmeanMAL <- aggregate(NewGenderDropouts$MALEDO, list(NewGenderDropouts$CDS_CODE), FUN = mean, data=NewGenderDropouts)
+names(groupmeanMAL) <- c('CDS_CODE','groupmeanMAL')
+
+NewGenderDropouts1 <- merge(NewGenderDropouts, groupmeanFEM, by="CDS_CODE")
+NewNewGenderDropouts <- merge(NewGenderDropouts1, groupmeanMAL, by="CDS_CODE")
+#--------------do the hierarchical with regular female and male ------------------- 
+# using data set NewGenderDropout, we will make a model. We need to merge it with the graduates 
+# Lol, since grads starts at 2013, we have to redo what we've done for this year 
+options(scipen = 999)
+graduatesin2013 <- read.csv(file="grads2013_14.csv", header = T, as.is = T) # load the data 
+dropoutsin2013 <- read.csv(file="dropout2013_14.csv", header = T, as.is = T)
+
+dropoutsin2013$DropoutTotal <- dropoutsin2013$DTOT + dropoutsin2013$D7 + dropoutsin2013$D8 # adding a column of dropout totals 
+
+do13gen <- dropoutsin2011[,c(2, 4, 22)] # creating new data frame with "CDS_CODE" which we will use to identify the school, gender, and DropoutTotal 
+do13eth <- dropoutsin2011[,c(2,3, 22)] # same but with ethnicity instead of gender
+
+do13gen$GENDER[do13gen$GENDER == "M"] <- 0
+do13gen$GENDER[do13gen$GENDER == "F"] <- 1
+do13gen$GENDER <- as.numeric(do13gen$GENDER)
+
+dogen13seperate <- cast(do13gen, CDS_CODE ~ GENDER, sum)
+colnames(dogen13seperate) <- c("CDS_CODE","MALEDO", "FEMALEDO")
+dropoutgen13 <- merge(dogen13seperate, do13gen, by="CDS_CODE")
+
+# now we will be merging it with the gradutes data 
+editedgrads2013 <- aggregate(UC_GRADS ~ CDS_CODE, data = graduatesin2013, sum)
+hlm2013 <- merge(dogen13seperate, editedgrads2013, by="CDS_CODE")
+mlmodelgengrad <- lmer(UC_GRADS ~ 1 + 1 | CDS_CODE, hlm2013) # Error: number of levels of each grouping factor must be < number of observations
+hlmmodelone <- lmer(UC_GRADS ~ 1 + 1 | MALEDO, hlm2013) # no idea what this is 
+
+#------------------Model using dropouts/enrollment rates-------------------------------
+dropoutsin2011$EnrolledTotal <- dropoutsin2011$ETOT + dropoutsin2011$D7 + dropoutsin2011$D8 # adding a total enrollment value to table 
+
+dropoutsin2011$rate <- dropoutsin2011$DropoutTotal/dropoutsin2011$EnrolledTotal
+
+ratehlmgen2013df <- dropoutsin2011[,c(2,4,24)] # creating new data frame with "CDS_CODE" which we will use to identify the school, gender, and rate which is dropoutstotal/enrolledtotal 
+ratehlmeth2013df <- dropoutsin2011[,c(2,3,24)] # same but with ethnicity instead of gender
+
+ratehlmgen2013df$GENDER[ratehlmgen2013df$GENDER == "M"] <- 0
+ratehlmgen2013df$GENDER[ratehlmgen2013df$GENDER == "F"] <- 1
+ratehlmgen2013df$GENDER <- as.numeric(ratehlmgen2013df$GENDER)
+
+ratehlmeth2013df$ETHNIC[ratehlmeth2013df$ETHNIC == 0] <- 11
+ratehlmeth2013df$ETHNIC[ratehlmeth2013df$ETHNIC == 1] <- 11
+ratehlmeth2013df$ETHNIC[ratehlmeth2013df$ETHNIC == 3] <- 11
+ratehlmeth2013df$ETHNIC[ratehlmeth2013df$ETHNIC == 4] <- 11
+ratehlmeth2013df$ETHNIC[ratehlmeth2013df$ETHNIC == 9] <- 11
+
+GenderDropouts2011rates <- aggregate(rate~CDS_CODE+GENDER, data= ratehlmgen2013df, sum)
+EthnicDropouts2011rates <- aggregate(rate~CDS_CODE+ETHNIC, data= ratehlmeth2013df, sum)
+
+#mlmodelgen2011rates <- lmer(rate ~ 1 + 1 | CDS_CODE, GenderDropouts2011rates)
+#summary(mlmodelgen2011rates) # error: Error in mkRespMod(fr, REML = REMLpass) : NA/NaN/Inf in 'y'
+
+
+#mlmodeleth2011rates <- lmer(rate ~ 1 + 1 | CDS_CODE, EthnicDropouts2011rates)
+#summary(mlmodelgen2011rates) # error: Error in mkRespMod(fr, REML = REMLpass) : NA/NaN/Inf in 'y'
+
+
+```

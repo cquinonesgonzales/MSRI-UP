@@ -1,0 +1,63 @@
+---
+title: "Combined Inferential Stats"
+author: "Cristal Quiñones"
+date: "7/10/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+We'll start by uploading all the data 
+
+```{r}
+# Merging demographic data 
+
+en_do <- merge(en_demo, do_demo, by = "dist_year")
+en_do_cp <- merge(en_do, cp_demo, by="dist_year")
+en_do_cp_ucCsu_demo <- merge(en_do_cp, ucCsu_demo, by="dist_year")
+
+write.csv(en_do_cp_ucCsu_demo, file="/Users/owner/en_do_cp_ucCsu_demo.csv")
+
+# Loading Sky's data 
+sus_grad_demo <- read.csv(file="sus_grad_demo.csv", header=TRUE)
+sus_grad_demo <- sus_grad_demo[,-c(1)]
+sus_grad_demo <- sus_grad_demo[,-c(2)]
+# Merging into one larger data set 
+
+en_do_cp_ucCsu_demo$dist_year <- as.character(en_do_cp_ucCsu_demo$dist_year)
+sus_grad_demo$dist_year <- as.character(sus_grad_demo$dist_year)
+
+en_do_cp_ucCsu_sus_grad_demo <- merge(en_do_cp_ucCsu_demo, sus_grad_demo, all=TRUE)
+
+write.csv(en_do_cp_ucCsu_sus_grad_demo, file="/Users/owner/en_do_cp_ucCsu_sus_grad_demo.csv")
+
+
+```
+
+Now, we will create a data frame: Enrollment for each ethnicity and each gender and CALPADS, and graduates 
+```{r}
+sus_demo <- read.csv(file="suspensiondemo.csv", header=T)
+sus_demo <- sus_demo[,-c(1)]
+cp_demo <- cp_demo[,-c(1)]
+Basis1 <- merge(Enroll_demo, cp_demo, by="dist_year")
+Basis <- merge(Basis1, ucCsu_demo, by="dist_year")
+Basis$enroll_total <- Basis$enroll_female + Basis$enroll_male
+Basis$ucCsu_total <- Basis$ucCsu_female + Basis$enroll_male 
+write.csv(Basis, file="/Users/owner/en_cp_ucCsu_demo.csv")
+
+# Data sets for future modeling 
+ExpBasis <- merge(Basis, exp_demo, by="dist_year") 
+write.csv(ExpBasis, file="/Users/owner/ExpIndividual.csv")
+
+SusBasis <- merge(Basis, sus_demo, by="dist_year")
+write.csv(SusBasis, file="/Users/owner/Sus_en_cp_ucCsu.csv")
+
+DoBasis <- merge(Basis,do_demo, by="dist_year")
+write.csv(DoBasis, file="/Users/owner/DoIndividual.csv")
+
+# Data sets for Odds Ratio 
+# Sky and Nat will each do one and upload it to dropbox "ORSus" and "ORExp"
+
+ORDo <- merge(Enroll_demo, do_demo, by="dist_year")
+write.csv(ORDo, file="/Users/owner/ORDo.csv")
+```

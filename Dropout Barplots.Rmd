@@ -1,0 +1,254 @@
+---
+title: "Dropout Data (Part II)"
+author: "Cristal Quiñones"
+date: "7/8/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+A continuation of "Dropout Data" to keep it from getting too large. 
+
+### Sunday work: making bar graphs 
+
+The first step is really to figure out how many dropouts there were TOTAL for each of our academic years. Then, we can figure out how to see how many of those dropouts are male and how many are female. So I guess technically the first step is to make a new data set with all this information, but to do this, I will first do the data frames with counties and total drop out for each year. 
+```{r}
+# First step is to make similar data frames for all years
+# I've already done 2011 and 2012, so all that is left is 2013, 2014, 2015 and 2016
+
+# Remove scientific notaion 
+options(scipen=999)
+#2013 
+thirteendata$County2013 <- thirteendata$CDS_CODE
+thirteendata$County2013 <- substr(thirteendata$County2013, 1,2)
+
+thirteendata$SumDo <- thirteendata$DTOT + thirteendata$D7 + thirteendata$D8
+
+ListOfCounties2013 <- as.numeric(unique(thirteendata$County2013)) 
+CountiesTotals2013 <- matrix(NA, nrow=length(ListOfCounties2013), ncol=2)
+for(i in 1:length(ListOfCounties2013)){ 
+  rowi <- which(thirteendata$County2013 == ListOfCounties2013[i])  
+  CountiesTotals2013[i,2] = sum(thirteendata[rowi,22]) 
+  CountiesTotals2013[i,1] = ListOfCounties2013[i] 
+}
+CountiesTotals2013 # printing our new data frame 
+```
+
+```{r}
+# 2014
+library(stringr)
+options(scipen=999)
+
+fourteendata$County2014 <- fourteendata$CDS_CODE
+fourteendata$County2014 <- substr(fourteendata$County2014, 1,2)
+
+fourteendata$SumDo2014 <- fourteendata$DTOT + fourteendata$D7 + fourteendata$D8
+
+ListOfCounties2014 <- as.numeric(unique(fourteendata$County2014))
+CountiesTotals2014 <- matrix(NA, nrow=length(ListOfCounties2014), ncol=2)
+for(j in 1:length(ListOfCounties2014)){
+  rowj <- which(fourteendata$County2014 == ListOfCounties2014[j])
+  CountiesTotals2014[j,2] = sum(fourteendata[rowj,23])
+  CountiesTotals2014[j,1] = ListOfCounties2014[j]
+}
+CountiesTotals2014
+```
+
+```{r}
+fifteendata$County2015 <- fifteendata$CDS_CODE
+fifteendata$County2015 <- substr(fifteendata$County2015, 1,2)
+
+fifteendata$SumDo2015 <- fifteendata$DTOT + fifteendata$D7 + fifteendata$D8
+
+ListOfCounties2015 <- as.numeric(unique(fifteendata$County2015))
+CountiesTotals2015 <- matrix(NA, nrow=length(ListOfCounties2015), ncol=2)
+for(j in 1:length(ListOfCounties2015)){
+  rowj <- which(fifteendata$County2015 == ListOfCounties2015[j])
+  CountiesTotals2015[j,2] = sum(fifteendata[rowj,23])
+  CountiesTotals2015[j,1] = ListOfCounties2015[j]
+}
+CountiesTotals2015
+```
+
+```{r}
+fifteendata$County2015 <- fifteendata$CDS_CODE
+fifteendata$County2015 <- substr(fifteendata$County2015, 1,2)
+
+fifteendata$SumDo2015 <- fifteendata$DTOT + fifteendata$D7 + fifteendata$D8
+
+ListOfCounties2015 <- as.numeric(unique(fifteendata$County2015))
+CountiesTotals2015 <- matrix(NA, nrow=length(ListOfCounties2015), ncol=2)
+for(j in 1:length(ListOfCounties2015)){
+  rowj <- which(fifteendata$County2015 == ListOfCounties2015[j])
+  CountiesTotals2015[j,2] = sum(fifteendata[rowj,23])
+  CountiesTotals2015[j,1] = ListOfCounties2015[j]
+}
+CountiesTotals2015
+```
+
+```{r}
+sixteendata$County2016 <- sixteendata$CDS_CODE
+sixteendata$County2016 <- substr(sixteendata$County2016, 1,2)
+
+sixteendata$SumDo2016 <- sixteendata$DTOT + sixteendata$D7 + sixteendata$D8
+
+ListOfCounties2016 <- as.numeric(unique(sixteendata$County2016))
+CountiesTotals2016 <- matrix(NA, nrow=length(ListOfCounties2016), ncol=2)
+for(j in 1:length(ListOfCounties2016)){
+  rowj <- which(sixteendata$County2016 == ListOfCounties2016[j])
+  CountiesTotals2016[j,2] = sum(sixteendata[rowj,22])
+  CountiesTotals2016[j,1] = ListOfCounties2016[j]
+}
+CountiesTotals2016
+```
+
+
+Now we have the six data sets that contain the county and their respective dropout numbers. The next step is to have a total for each year. This would require taking the sum of the second column for each one of the data frames we've just made. 
+
+```{r}
+YearDORate <- matrix(NA, nrow=1, ncol=2)
+for(i in 1:58){
+  YearDORate[1,2] = sum(CountiesTotals2011[i,2])
+  YearDORate[1,1] = "Total"
+}
+```
+
+```{r}
+years <- c(2011:2016)
+total2011 <- sum(CountiesTotals2011[,2])
+total2012 <- sum(CountiesTotals2012[,2])
+total2013 <- sum(CountiesTotals2013[,2])
+total2014 <- sum(CountiesTotals2014[,2])
+total2015 <- sum(CountiesTotals2015[,2])
+total2016 <- sum(CountiesTotals2016[,2])
+
+yearlytotals <- c(total2011, total2012, total2013, total2014, total2015, total2016)
+
+yearlytotalsDF <- data.frame(years, yearlytotals)
+names(yearlytotalsDF) <- c("Years", "Totals")
+```
+
+Okay so now (in a really roundabout way), we have a data matrix with the years and their totals. Now, we make a bargraph with it. And then we have to figure out how many of them are female and how many are male. 
+
+```{r}
+# Simple bargraph 
+library(ggplot2)
+
+dobar <- ggplot(yearlytotalsDF, aes(x=Years, y=Totals)) + geom_bar(stat="identity") + labs(title="Yearly Dropout Rates") + scale_x_discrete(limits = c(2011, 2012,2013,2014,2015, 2016))
+```
+
+```{r}
+options(scipen=999)
+library(ggplot2)
+library(scales)
+# Load data sets 
+elevendata <- read.csv(file="dropout2011_12.csv", header = T)
+twelvedata <- read.csv(file="dropouttwelve.csv", header = T)
+thirteendata <- read.csv(file="dropout2013_14.csv", header = T)
+fourteendata <- read.csv(file="dropout2014_15.csv", header = T)
+fifteendata <- read.csv(file="dropout2015_16.csv", header = T)
+sixteendata <- read.csv(file="dropout2016_17.csv", header = T)
+
+elevendata <- elevendata[,-c(1)]
+#twelvedata <- twelvedata[,-c(1)]
+#thirteendata <- thirteendata[,-c(1)]
+fourteendata <- fourteendata[,-c(1)]
+fifteendata <- fifteendata[,-c(1)]
+#sixteendata <- sixteendata[,-c(1)]
+
+elevendata$SumDO <- elevendata$D7 + elevendata$D8 + elevendata$DTOT
+twelvedata$SumDO <- twelvedata$D7 + twelvedata$D8 + twelvedata$DTOT
+thirteendata$SumDO <- thirteendata$D7 + thirteendata$D8 + thirteendata$DTOT
+fourteendata$SumDO <- fourteendata$D7 + fourteendata$D8 + fourteendata$DTOT
+fifteendata$SumDO <- fifteendata$D7 + fifteendata$D8 + fifteendata$DTOT
+sixteendata$SumDO <- sixteendata$D7 + sixteendata$D8 + sixteendata$DTOT
+# Print old column names 
+
+# Same column numbers 
+new2011 <- elevendata[, c(1:3, 20,21)]
+new2012 <- twelvedata[, c(1:3, 20,21)]
+new2013 <- thirteendata[,c(1:3,20,21)]
+new2014 <- fourteendata[,c(1:3,20,21)]
+new2015 <- fifteendata[,c(1:3,20,21)]
+new2016 <- sixteendata[,c(1:3,20,21)]
+
+# Same column names 
+colnames(new2011) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+colnames(new2012) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+colnames(new2013) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+colnames(new2014) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+colnames(new2015) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+colnames(new2016) <- c("CDS_CODE","ETHNIC","GENDER","YEAR","SUM")
+
+# Merging all data sets 
+combined <- rbind(new2011, new2012, new2013, new2014, new2015, new2016)
+# Renaming years - change to 2011-12 when you have time 
+combined$YEAR <- as.character(combined$YEAR)
+combined$YEAR[combined$YEAR == "1112"] <- "2011-12"
+combined$YEAR[combined$YEAR == "1213"] <- "2012-13"
+combined$YEAR[combined$YEAR == "1314"] <- "2013-14"
+combined$YEAR[combined$YEAR == "1415"] <- "2014-15"
+combined$YEAR[combined$YEAR == "1516"] <- "2015-16"
+combined$YEAR[combined$YEAR == "1617"] <- "2016-17"
+
+combined$GENDER <- as.character(combined$GENDER)
+combined$GENDER[combined$GENDER == "F"] <- "Female"
+combined$GENDER[combined$GENDER == "M"] <- "Male"
+# Bar plot with genders 
+# taking the sums so we get the total number of female students dropping out and total nubmber f male students dropping out
+newcombinedgen <- combined[,-c(1,2)]
+geninfo <- aggregate(.~YEAR+GENDER, data=newcombinedgen, sum)
+
+GenPlot <- ggplot(geninfo, aes(YEAR,SUM)) + geom_bar(aes(fill=GENDER), stat="identity") + labs(title="Yearly Dropout Counts in California K-12 Schools", subtitle = "By Gender", x="Years", y="Total", fill="Gender") + theme(plot.title = element_text(hjust=0.5), plot.subtitle = element_text(hjust = 0.5)) + scale_y_continuous(limits=c(0,90000), breaks = seq(0,90000,10000), labels = comma)
+
+# Relabeling so that ethnicities are represented by name and not by number
+combined$ETHNIC <- as.character(combined$ETHNIC)
+combined$ETHNIC[combined$ETHNIC == 5] <- "Hispanic/Latinx"
+combined$ETHNIC[combined$ETHNIC == 6] <- "Black"
+combined$ETHNIC[combined$ETHNIC == 7] <- "White"
+combined$ETHNIC[combined$ETHNIC == 2] <- "Asian"
+combined$ETHNIC[combined$ETHNIC == 0] <- "Other"
+combined$ETHNIC[combined$ETHNIC == 1] <- "Other"
+combined$ETHNIC[combined$ETHNIC == 3] <- "Other"
+combined$ETHNIC[combined$ETHNIC == 4] <- "Other"
+combined$ETHNIC[combined$ETHNIC == 9] <- "Other"
+# Bar plot with ethnicities
+newcombinedeth <- combined[,-c(1,3)]
+ethinfo <- aggregate(.~YEAR+ETHNIC, data=newcombinedeth,sum)
+
+
+EthPlot <- ggplot(ethinfo, aes(YEAR,SUM)) + geom_bar(aes(fill=ETHNIC), stat="identity") + labs(title="Yearly Dropout Counts in California K-12 Schools", subtitle = "By Race/Ethnicity", x="Years", y="Total", fill="Race/Ethnicity") + theme(plot.title = element_text(hjust=0.5), plot.subtitle = element_text(hjust = 0.5)) + scale_y_continuous(limits=c(0, 90000), breaks=seq(0,90000,10000), labels = comma)
+
+
+write.csv(ethinfo, file="/Users/owner/ethinfo.csv") # in theory this means you should only have to make one like to read these two files and the plots 
+write.csv(geninfo, file="/Users/owner/geninfo.csv")
+```
+
+To add angle to x axis, include 
+axis.text.x = element_text(angle = 45)
+in the theme 
+```{r}
+#Trying to change it to percent form 
+EthPercentONE <- ggplot(ethinfo, aes(YEAR,(ethinfo$SUM)/sum(ethinfo$SUM))) + geom_bar(aes(fill=ETHNIC), stat="identity") 
+``` 
+
+New Data sets.
+
+We downloaded new data: graduate outcome data, and two different povery data sets. 
+```{r}
+#loading graduation data into R
+grad1314 <- read.csv(file="grads1314.csv", header=TRUE)
+grad1415 <- read.csv(file="grads1415.csv", header=TRUE)
+grad1516 <- read.csv(file="grads1516.csv", header=TRUE)
+grad1617 <- read.csv(file="grads1617.csv", header=TRUE)
+
+#loading unduplicated student poverty data // free reduced lunch data 
+frpm1314 <- read.csv(file="frpm1314.csv", header=TRUE)
+frpm1415 <- read.csv(file="frpm1415.csv", header=TRUE)
+frpm1516 <- read.csv(file="frpm1516.csv", header=TRUE)
+frpm1617 <- read.csv(file="frpm1617.csv", header=TRUE)
+
+#loading other poverty data 
+
+```
+

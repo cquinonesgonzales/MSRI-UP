@@ -1,0 +1,159 @@
+---
+title: "Enrollment Data check"
+author: "Cristal Quiñones"
+date: "7/17/2018"
+output: html_document
+---
+aggregate enrollment by district 
+Merge with enrollment from dropout 
+Compare numbers 
+Have variables for gender and ethnicity 
+
+```{r}
+library(stringr)
+# We are going to compare it to the enrollment data that came from the Dropout data set, so first we will load a table with that information 
+
+enrollment 
+
+# Now, we will try to create a similar table with the data from the enrollment data sets. Some reminders on how to:
+# download enrollment data (x)
+# convert to csv's (x)
+# remove scientific notation (x)
+# load into R (x)
+# add "years" columns: 20xx-yy (x)
+# stack the years (x)
+# get rid of uneccesary columns (including any grades below 7th) (x)
+# aggregate to have gender columns 
+# aggregate to have ethnicity columns 
+# extract the district numbers into new column 
+# create a dist_year column 
+options(scipen = 999)
+enrollment2011 <- read.csv(file="enrollment2011-12.csv", header=T)
+enrollment2012 <- read.csv(file="enrollment2012-13.csv", header=T)
+enrollment2013 <- read.csv(file="enrollment2013-14.csv", header=T)
+enrollment2014 <- read.csv(file="enrollment2014-15.csv", header=T)
+enrollment2015 <- read.csv(file="enrollment2015-16.csv", header=T)
+enrollment2016 <- read.csv(file="enrollment2016-17.csv", header=T)
+
+enrollment2011$YEAR <- "2011-12"
+enrollment2012$YEAR <- "2012-13"
+enrollment2013$YEAR <- "2013-14"
+enrollment2014$YEAR <- "2014-15"
+enrollment2015$YEAR <- "2015-16"
+enrollment2016$YEAR <- "2016-17"
+
+combinedenrollment <- rbind(enrollment2011,enrollment2012, enrollment2013, enrollment2014, enrollment2015, enrollment2016)
+
+combinedenrollment <- combinedenrollment[,-c(2,3,4,7:13,16,22,23)]
+
+combinedenrollment$en_tot <- combinedenrollment$GR_7 + combinedenrollment$GR_8 +combinedenrollment$GR_9 +combinedenrollment$GR_10 + combinedenrollment$GR_11 + combinedenrollment$GR_12 + combinedenrollment$UNGR_SEC
+
+combinedenrollment <- combinedenrollment[,-c(4:10)]
+
+combinedenrollment$GENDER <- as.character(combinedenrollment$GENDER)
+combinedenrollment$GENDER[combinedenrollment$GENDER == "F"] <- "Female"
+combinedenrollment$GENDER[combinedenrollment$GENDER == "M"] <- "Male"
+combinedenrollment$ETHNIC <- as.character(combinedenrollment$ETHNIC)
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 5] <- "Hispanic or Latinx"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 6] <- "Black"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 7] <- "White"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 2] <- "Asian"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 0] <- "Other"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 1] <- "Other"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 3] <- "Other"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 4] <- "Other"
+combinedenrollment$ETHNIC[combinedenrollment$ETHNIC == 9] <- "Other"
+
+combinedenrollment$dist <- combinedenrollment$CDS_CODE
+combinedenrollment$dist <- substr(combinedenrollment$dist, 3,7)
+combinedenrollment$CDS_CODE <- as.numeric(combinedenrollment$CDS_CODE)
+combinedenrollment$en_tot <- as.numeric(combinedenrollment$en_tot)
+
+enrollmentByEth <- aggregate(en_tot~YEAR+ETHNIC+dist, data = combinedenrollment,sum)
+enrollmentByGen <- aggregate(en_tot~YEAR+GENDER+dist, data = combinedenrollment,sum)
+
+enrollmentByEth$dist_year <- paste(enrollmentByEth$dist, enrollmentByEth$YEAR, sep = "_")
+enrollmentByGen$dist_year <- paste(enrollmentByGen$dist, enrollmentByGen$YEAR, sep = "_")
+
+enrollmentByEth <- enrollmentByEth[,-c(1,3)]
+enrollmentByGen <- enrollmentByGen[,-c(1,3)]
+
+# By Ethnicities 
+enAsian <- filter(enrollmentByEth, enrollmentByEth$ETHNIC == "Asian")
+enBlack <- filter(enrollmentByEth, enrollmentByEth$ETHNIC == "Black")
+enHisp <- filter(enrollmentByEth, enrollmentByEth$ETHNIC == "Hispanic or Latinx")
+enWhite <- filter(enrollmentByEth, enrollmentByEth$ETHNIC == "White")
+enOther <- filter(enrollmentByEth, enrollmentByEth$ETHNIC == "Other")
+
+colnames(enAsian) <- c("lab","enroll_asian","dist_year")
+colnames(enBlack) <- c("lab","enroll_black","dist_year")
+colnames(enHisp) <- c("lab","enroll_hisp","dist_year")
+colnames(enWhite) <- c("lab","enroll_white","dist_year")
+colnames(enOther) <- c("lab","enroll_other","dist_year")
+
+enAsian <- enAsian[,-c(1)]
+enBlack <- enBlack[,-c(1)]
+enHisp <- enHisp[,-c(1)]
+enWhite <- enWhite[,-c(1)]
+enOther <- enOther[,-c(1)]
+
+EthEnroll1 <- merge(enAsian,enBlack, by="dist_year")
+EthEnroll2 <- merge(EthEnroll1, enHisp, by="dist_year")
+EthEnroll3 <- merge(EthEnroll2, enWhite, by="dist_year")
+EthEnroll <- merge(EthEnroll3,enOther, by="dist_year")
+
+# By Gender 
+enFem <- filter(enrollmentByGen, enrollmentByGen$GENDER == "Female")
+enMal <- filter(enrollmentByGen, enrollmentByGen$GENDER == "Male")
+
+colnames(enFem) <- c("lab","enroll_female","dist_year")
+colnames(enMal) <- c("lab","enroll_male","dist_year")
+
+enFem <- enFem[,-c(1)]
+enMal <- enMal[,-c(1)]
+
+GenEnroll <- merge(enFem, enMal, by="dist_year")
+
+Enroll_demo <- merge(EthEnroll, GenEnroll, by="dist_year")
+write.csv(Enroll_demo, file="/Users/owner/Enroll_demo.csv")
+```
+
+```{r}
+compareEn <- merge(enrollment, Enroll_demo, by="dist_year")
+write.csv(compareEn, file="/Users/owner/compareEn.csv")
+```
+
+
+Re doing all of our merged data lol 
+
+```{r}
+do_demo <- read.csv(file="do_demo.csv", header=T)
+cp_demo <- read.csv(file="cp_demo.csv", header=T)
+ucCsu_demo 
+
+en_do_demo <- merge(Enroll_demo, do_demo, by="dist_year")
+en_do_cp_demo <- merge(en_do_demo, cp_demo, by="dist_year")
+en_do_cp_ucCsu_demo <- merge(en_do_cp_demo, ucCsu_demo, by="dist_year")
+write.csv(en_do_cp_ucCsu_demo, file="/Users/owner/en_do_cp_ucCsu_demographix.csv")
+```
+
+Now, to do the large, complete merge 
+```{r}
+exp_demo
+sus_demo
+sus_demo <- read.csv(file = "suspensiondemo.csv", header = T)
+
+merge1 <- merge(en_do_cp_ucCsu_demo, exp_demo, by="dist_year")
+completeMerge <- merge(merge1, sus_demo, by="dist_year")
+completeMerge <- completeMerge[,-c(9,17,35)] # removing col with indices 
+
+# Now we are going to add a total column for ucCsu, do, exp, sus, and en 
+completeMerge$ucCsu_total <- completeMerge$ucCsu_female + completeMerge$ucCsu_male
+completeMerge$do_total <- completeMerge$do_female + completeMerge$do_male
+completeMerge$exp_tot <- completeMerge$Expulsions_Females + completeMerge$Expulsions_Males
+completeMerge$sus_tot <- completeMerge$Female.Suspensions + completeMerge$Male.Suspensions
+completeMerge$enroll_tot <- completeMerge$enroll_female + completeMerge$enroll_male
+
+write.csv(completeMerge, file="/Users/owner/completeMerge.csv")
+
+```

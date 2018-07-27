@@ -1,0 +1,182 @@
+---
+title: "Dropout Data (Part III)"
+author: "Cristal Quiñones"
+date: "7/10/2018"
+output: html_document
+---
+In this Markdown file, we will be creating new data frames to later merge with similar expulsion and suspension data. 
+
+```{r}
+DropoutCombined <- read.csv(file="DropoutCombined.csv", header = T)
+# renaming column "COUNTY" to "countyname" for consistency with the other data sets for when we merge 
+colnames(DropoutCombined)[colnames(DropoutCombined) =="COUNTY"] <- "countycode"
+colnames(DropoutCombined)[colnames(DropoutCombined) =="YEAR"] <- "academicyear"
+
+DropoutCombined$ETHNIC <- as.character(DropoutCombined$ETHNIC)
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 5] <- "Hispanic or Latino"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 6] <- "African American"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 7] <- "White"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 2] <- "Asian"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 0] <- "Other"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 1] <- "Other"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 3] <- "Other"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 4] <- "Other"
+DropoutCombined$ETHNIC[DropoutCombined$ETHNIC == 9] <- "Other"
+
+EthnicitySumsbyD <- DropoutCombined[,c(1,2,20,22)]
+
+EthnicitySumsbyD$SumDo <- as.numeric(EthnicitySumsbyD$SumDo)
+dropouttotalsETH <- aggregate(SumDo~academicyear+ETHNIC+districtcode, data=EthnicitySumsbyD,sum)
+dropouttotalsETH$academicyear <- as.character(dropouttotalsETH$academicyear)
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1112] <- "2011-12"
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1213] <- "2012-13"
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1314] <- "2013-14"
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1415] <- "2014-15"
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1516] <- "2015-16"
+dropouttotalsETH$academicyear[dropouttotalsETH$academicyear == 1617] <- "2016-17"
+
+
+dropouttotalsETH$dist_year <- paste(dropouttotalsETH$districtcode, dropouttotalsETH$academicyear, sep = "_")
+dropouttotalsETH <- dropouttotalsETH[,-c(1,3)] 
+
+
+GenderSumsbyD <- DropoutCombined[,c(1,3,20,22)]
+GenderSumsbyD$SumDo <- as.numeric(GenderSumsbyD$SumDo)
+dropouttotalsGEN <- aggregate(SumDo~academicyear+GENDER+districtcode, data = GenderSumsbyD,sum)
+
+dropouttotalsGEN$academicyear <- as.character(dropouttotalsGEN$academicyear)
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1112] <- "2011-12"
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1213] <- "2012-13"
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1314] <- "2013-14"
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1415] <- "2014-15"
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1516] <- "2015-16"
+dropouttotalsGEN$academicyear[dropouttotalsGEN$academicyear == 1617] <- "2016-17"
+
+dropouttotalsGEN$dist_year <- paste(dropouttotalsGEN$districtcode, dropouttotalsGEN$academicyear, sep="_")
+dropouttotalsGEN <- dropouttotalsGEN[,-c(1,3)]
+
+#Just Females
+dropouttotalsFEM <- filter(dropouttotalsGEN, dropouttotalsGEN$GENDER == "F")
+colnames(dropouttotalsFEM) <- c("do_female","do_female","dist_year")
+dropouttotalsFEM <- dropouttotalsFEM[,-c(1)]
+
+#Just Males
+dropouttotalsMAL <- filter(dropouttotalsGEN, dropouttotalsGEN$GENDER =="M")
+colnames(dropouttotalsMAL) <- c("label","do_male","dist_year")
+dropouttotalsMAL <- dropouttotalsMAL[,-c(1)]
+
+# Merging as one! 
+do_gender <- merge(dropouttotalsFEM, dropouttotalsMAL, by="dist_year")
+
+```
+
+```{r}
+# Okay, so we will be doing a similar thing with ethnicities 
+dropouttotalsAsian <- filter(dropouttotalsETH, dropouttotalsETH$ETHNIC == "Asian")
+colnames(dropouttotalsAsian) <- c("label","do_asian","dist_year")
+dropouttotalsAsian <- dropouttotalsAsian[,-c(1)]
+
+dropouttotalsBlack <- filter(dropouttotalsETH, dropouttotalsETH$ETHNIC == "African American")
+colnames(dropouttotalsBlack) <- c("label","do_black","dist_year")
+dropouttotalsBlack <- dropouttotalsBlack[,-c(1)]
+
+dropouttotalsHispanic <- filter(dropouttotalsETH, dropouttotalsETH$ETHNIC == "Hispanic or Latino")
+colnames(dropouttotalsHispanic) <- c("label","do_hisp","dist_year")
+dropouttotalsHispanic <- dropouttotalsHispanic[,-c(1)]
+
+dropouttotalsWhite <- filter(dropouttotalsETH, dropouttotalsETH$ETHNIC == "White")
+colnames(dropouttotalsWhite) <- c("label","do_white","dist_year")
+dropouttotalsWhite <- dropouttotalsWhite[,-c(1)]
+
+dropouttotalsOther <- filter(dropouttotalsETH, dropouttotalsETH$ETHNIC == "Other")
+colnames(dropouttotalsOther) <- c("label","do_other","dist_year")
+dropouttotalsOther <- dropouttotalsOther[,-c(1)]
+
+#do_ethnicity <- merge(dropouttotalsAsian,dropouttotalsBlack,dropouttotalsHispanic,dropouttotalsWhite, dropouttotalsOther, by="dist_year") --- does not work becuase merge is for two data frames only 
+
+#so we'll do it two at a time then 
+
+do_ethnicity1 <- merge(dropouttotalsAsian, dropouttotalsBlack, by = "dist_year")
+do_ethnicity2 <- merge(do_ethnicity1, dropouttotalsHispanic, by="dist_year")
+do_ethnicity3 <- merge(do_ethnicity2, dropouttotalsWhite, by="dist_year")
+do_ethnicity <- merge(do_ethnicity3, dropouttotalsOther, by="dist_year")
+
+do_demo <- merge(do_ethnicity, do_gender, by="dist_year")
+
+``` 
+
+Now, we want to do the same with enrollment 
+```{r}
+DropoutCombined$academicyear <- as.character(DropoutCombined$academicyear)
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1112] <- "2011-12"
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1213] <- "2012-13"
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1314] <- "2013-14"
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1415] <- "2014-15"
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1516] <- "2015-16"
+DropoutCombined$academicyear[DropoutCombined$academicyear == 1617] <- "2016-17"
+
+DropoutCombined$SumEn <- DropoutCombined$ETOT + DropoutCombined$D7 + DropoutCombined$D8
+
+EthnicityEnrollmentbyDistrict <- DropoutCombined[,c(23,20,2,24)]
+enrollmenttotalsETH <- aggregate(SumEn~academicyear+ETHNIC+districtcode, data=EthnicityEnrollmentbyDistrict,sum)
+
+
+enrollmenttotalsETH$dist_year <- paste(enrollmenttotalsETH$districtcode, enrollmenttotalsETH$academicyear, sep = "_")
+enrollmenttotalsETH <- enrollmenttotalsETH[,-c(1,3)] 
+
+#Asian
+enrolledtotalsAsian <- filter(enrollmenttotalsETH, enrollmenttotalsETH$ETHNIC=="Asian")
+colnames(enrolledtotalsAsian) <- c("label","en_asian","dist_year")
+enrolledtotalsAsian <- enrolledtotalsAsian[,-c(1)]
+#Black
+enrolledtotalsBlack <- filter(enrollmenttotalsETH, enrollmenttotalsETH$ETHNIC=="African American")
+colnames(enrolledtotalsBlack) <- c("label","en_black","dist_year")
+enrolledtotalsBlack <- enrolledtotalsBlack[,-c(1)]
+#Hispanic or Latino 
+enrolledtotalsHisp <- filter(enrollmenttotalsETH, enrollmenttotalsETH$ETHNIC=="Hispanic or Latino")
+colnames(enrolledtotalsHisp) <- c("label","en_hisp","dist_year")
+enrolledtotalsHisp <- enrolledtotalsHisp[,-c(1)]
+# White 
+enrolledtotalsWhite <- filter(enrollmenttotalsETH, enrollmenttotalsETH$ETHNIC=="White")
+colnames(enrolledtotalsWhite) <- c("label","en_white","dist_year")
+enrolledtotalsWhite <- enrolledtotalsWhite[,-c(1)]
+#Other 
+enrolledtotalsOther <- filter(enrollmenttotalsETH, enrollmenttotalsETH$ETHNIC=="Other")
+colnames(enrolledtotalsOther) <- c("label","en_other","dist_year")
+enrolledtotalsOther <- enrolledtotalsOther[,-c(1)]
+
+en_ethnicity1 <- merge(enrolledtotalsAsian, enrolledtotalsBlack, by="dist_year")
+en_ethnicity2 <- merge(en_ethnicity1, enrolledtotalsHisp, by="dist_year")
+en_ethnicity3 <- merge(en_ethnicity2, enrolledtotalsWhite, by="dist_year")
+en_ethnicity <- merge(en_ethnicity3, enrolledtotalsOther, by="dist_year")
+
+# Now we do the exact same thing but this time for enrollment information of gender 
+GenderEnrollmentbyDistrict <- DropoutCombined[,c(3,20,23,24)]
+GenderEnrollmentbyDistrict$SumEn <- as.numeric(GenderEnrollmentbyDistrict$SumEn)
+enrollmenttotalsGEN <- aggregate(SumEn~academicyear+GENDER+districtcode, data = GenderEnrollmentbyDistrict,sum)
+
+enrollmenttotalsGEN$dist_year <- paste(enrollmenttotalsGEN$districtcode, enrollmenttotalsGEN$academicyear, sep="_")
+enrollmenttotalsGEN <- enrollmenttotalsGEN[,-c(1,3)]
+
+#Just Females
+enrollmenttotalsFEM <- filter(enrollmenttotalsGEN, enrollmenttotalsGEN$GENDER == "F")
+colnames(enrollmenttotalsFEM) <- c("lab","en_female","dist_year")
+enrollmenttotalsFEM <- enrollmenttotalsFEM[,-c(1)]
+
+#Just Males
+enrollmenttotalsMAL <- filter(enrollmenttotalsGEN, enrollmenttotalsGEN$GENDER =="M")
+colnames(enrollmenttotalsMAL) <- c("label","en_male","dist_year")
+enrollmenttotalsMAL <- enrollmenttotalsMAL[,-c(1)]
+
+# Merging as one! 
+en_gender <- merge(enrollmenttotalsFEM, enrollmenttotalsMAL, by="dist_year")
+
+#enrollment data set !! 
+
+en_demo <- merge(en_ethnicity, en_gender, by="dist_year")
+
+
+write.csv(do_demo, file = "/Users/owner/do_demo.csv")
+write.csv(en_demo, file="/Users/owner/en_demo.csv")
+
+``` 
